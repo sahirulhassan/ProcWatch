@@ -3,22 +3,24 @@ import sys
 from datetime import datetime
 
 import psutil
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtGui import QStandardItemModel, QStandardItem
 from PyQt6.QtWidgets import QApplication, QMainWindow, QHeaderView, QAbstractItemView, QMessageBox
 from ui_procwatch import Ui_ProcWatch
 
 
-class ProcessMonitor(QMainWindow):
+class ProcWatch(QMainWindow):
     def __init__(self):
         super().__init__()
         self.ui = Ui_ProcWatch()
         self.ui.setupUi(self)
-        self.systemInfoTimer = QTimer()
         self.initializeGrid()
         self.model = QStandardItemModel()
-        self.tableTimer = QTimer()
         self.initializeTable()
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.updateSystemInfo)
+        self.timer.timeout.connect(self.update_processes)
+        self.timer.start(10000)  # Update every 10 seconds
         self.ui.killBtn.clicked.connect(self.killProcess)
 
     def initializeGrid(self):
@@ -41,9 +43,6 @@ class ProcessMonitor(QMainWindow):
         self.ui.maxFreqDisplay.setText(max_freq)
 
         self.updateSystemInfo()  # Initial system info update
-
-        self.systemInfoTimer.timeout.connect(self.updateSystemInfo)
-        self.systemInfoTimer.start(5000)  # in ms
 
     def updateSystemInfo(self):
         boot_time = datetime.fromtimestamp(psutil.boot_time())
@@ -75,10 +74,6 @@ class ProcessMonitor(QMainWindow):
         # Set selection mode to select entire rows
         self.ui.processTable.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.update_processes()  # Initial update immediately
-        # Setup timer to update model every second
-        self.tableTimer.timeout.connect(self.update_processes)
-        self.tableTimer.start(10000)  # in ms
-
         # Set the model to the table view
         self.ui.processTable.setModel(self.model)
 
@@ -101,7 +96,8 @@ class ProcessMonitor(QMainWindow):
 
                 items = []
                 for attr in row_data:
-                    item = QStandardItem(str(attr))
+                    item = QStandardItem()
+                    item.setData(attr, Qt.ItemDataRole.DisplayRole)
                     item.setEditable(False)
                     items.append(item)
 
@@ -109,8 +105,6 @@ class ProcessMonitor(QMainWindow):
 
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
-
-    from PyQt6.QtWidgets import QMessageBox
 
     def killProcess(self):
         selected_rows = self.ui.processTable.selectionModel().selectedRows()
@@ -139,6 +133,6 @@ class ProcessMonitor(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = ProcessMonitor()
+    window = ProcWatch()
     window.show()
     sys.exit(app.exec())
