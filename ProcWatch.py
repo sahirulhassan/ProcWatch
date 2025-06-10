@@ -1,8 +1,7 @@
-import shutil
 import sys
 from datetime import datetime
-
 import psutil
+import shutil
 from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtGui import QStandardItemModel, QStandardItem
 from PyQt6.QtWidgets import QApplication, QMainWindow, QHeaderView, QAbstractItemView, QMessageBox
@@ -27,7 +26,7 @@ class ProcWatch(QMainWindow):
         username = psutil.users()[0].name
         battery = psutil.sensors_battery()
         battery_status = f"{battery.percent}%" if battery else "N/A"
-        disk_usage = shutil.disk_usage("C:/") # psutil's disk usage function is incompatible with the latest python
+        disk_usage = shutil.disk_usage("C:/")  # psutil's disk usage function is incompatible with the latest python
         # distro so using shutil
         disk_percent = (disk_usage.used / disk_usage.total) * 100
         disk_percent = f"{disk_percent:.2f}% of {disk_usage.total / (1024 ** 3):.2f} GB"
